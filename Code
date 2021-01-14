@@ -1,0 +1,92 @@
+import pandas as pd
+import seaborn as sns
+
+df = pd.read_csv("athlete_events.csv")
+
+# STEP 0
+print("Step 0")
+print("===============")
+
+print(f"There are {len(df)} records in the dataset") 
+
+# STEP 1
+
+df['Medal'].fillna("None", inplace = True)
+total_medal = df[df.Medal != "None"]
+
+print("\nStep 1")
+print("===============")
+print(f"There are {len(total_medal)} records in the dataset with medals")
+
+# # STEP 2
+print("\nStep 2")
+print("===============")
+
+avg_height = df.groupby('Sport')['Height'].mean().sort_values(ascending = False).reset_index()
+tall_height = avg_height.head(3)
+short_height = avg_height.nsmallest(3, 'Height')
+avg_weight_sorted = df.groupby('Sport')['Weight'].mean().dropna().sort_values(ascending = False).reset_index()
+light_weight = avg_weight_sorted.nsmallest(3, 'Weight')
+heavy_weight = avg_weight_sorted.head(3)
+
+print("Tallest: ")
+print(tall_height)
+
+print("Shortest: ")
+print(short_height)
+
+print("Heaviest: ")
+print(heavy_weight)
+
+print("Lightest: ")
+print(light_weight) 
+
+# STEP 3
+print("\nStep 3")
+print("===============")
+
+winter_gold = df[(df.Season == 'Winter') & (df.Medal == "Gold")]
+medal_count = winter_gold.groupby(['Year', 'Team'])['Medal'].agg('count').reset_index()
+topCountries = medal_count.nlargest(5, 'Medal')
+medal_sort = medal_count.sort_values(['Year', 'Medal'], ascending = False).groupby('Year').head(1)
+year_sort = medal_sort.sort_values(['Year'], ascending = True)
+
+print(year_sort)
+
+# STEP 4
+print("\nStep 4")
+print("===============")
+
+team_cleaned = df[(df.Medal != 'None')]
+m_count = team_cleaned.groupby(['Sport', 'Team'])['Medal'].agg('count').reset_index() 
+team_grouped = m_count.groupby('Sport').max().reset_index()
+
+print(team_grouped)
+
+# STEP 5
+print("\nStep 5")
+print("===============")
+
+female_ratio = df.pivot_table(index = 'Year', columns = 'Sex', aggfunc='size', fill_value=0)
+total = female_ratio[['F', 'M']].sum(axis=1)
+female_ratio['Female Ratio'] = round(100 * female_ratio['F'] / total, 1).plot.line()
+
+# STEP 6
+print("\nStep 6")
+print("===============")
+
+avg_athlete = df.groupby('Year')['Age'].agg('mean').reset_index()
+sns.lineplot(data = avg_athlete, x = "Year", y = "Age" ) 
+
+# STEP 7
+print("\nStep 7")
+print("===============")
+print("We recommend: ")
+
+yr2016 = df[df['Year'] == 2016]
+Medals = df[df["Medal"] != 'None']
+Medals = Medals[Medals['Year'] == 2016]
+ratio = yr2016.groupby('Sport')['ID'].count() / Medals.groupby('Sport')['ID'].count()
+least = ratio.nsmallest(3)
+
+print(f"\n{least}")
